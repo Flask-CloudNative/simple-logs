@@ -1,0 +1,4 @@
+gunicorn
+bottle
+bottle-websocket
+websocket-client
