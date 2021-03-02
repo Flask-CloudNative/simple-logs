@@ -1,4 +1,4 @@
-import os
+import socket
 from bottle import static_file, Bottle
 from bottle.ext.websocket import GeventWebSocketServer
 from bottle.ext.websocket import websocket
@@ -22,7 +22,7 @@ def api_v1_logs_websocket(ws):
 
 @app.get('/api/v1/logs')
 def api_v1_logs():
-    web_socket_host = os.environ.get('LOG_WEBSOCKET', '0.0.0.0:6008')
+    web_socket_host = socket.gethostbyname(host_name)
     html_text = '''
     <!DOCTYPE HTML>
     <html>
@@ -31,7 +31,7 @@ def api_v1_logs():
             <title>Simple Logs</title>
             <link rel="stylesheet" href="/api/v1/logs/static/logs.css" type="text/css" />
             <script type="text/javascript">
-                var wsUrl = "ws://{0}/api/v1/logs/websocket";
+                var wsUrl = "ws://{0}:6008/api/v1/logs/websocket";
             </script>
             <script src="/api/v1/logs/static/logs.js" type="text/javascript" charset="utf-8"></script>
         </head>
