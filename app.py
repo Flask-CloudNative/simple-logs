@@ -22,7 +22,7 @@ def api_v1_logs_websocket(ws):
 
 @app.get('/api/v1/logs')
 def api_v1_logs():
-    web_socket_host = socket.gethostbyname(host_name)
+    web_socket_host = socket.gethostbyname(socket.gethostname())
     html_text = '''
     <!DOCTYPE HTML>
     <html>
