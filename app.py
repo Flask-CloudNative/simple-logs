@@ -1,52 +1,39 @@
 import os
-from bottle import static_file, Bottle
-from bottle.ext.websocket import GeventWebSocketServer
-from bottle.ext.websocket import websocket
+from flask import Flask, request, render_template
+from gevent import pywsgi
+from geventwebsocket.handler import WebSocketHandler
 
-app = Bottle()
+app = Flask(__name__)
 users = set()  # 连接进来的WebSocket客户端集合
 
 
-@app.get('/logs/websocket', apply=[websocket])
-def websocket(ws):
-    users.add(ws)
+@app.route('/logs/websocket')
+def logs_websocket():
+    wsock = request.environ.get('wsgi.websocket')
+    users.add(wsock)
+    if not wsock:
+        abort(400, 'Expected WebSocket request.')
     while True:
-        msg = ws.receive()  # 接收客户端的信息
-        if msg:
-            for u in users:
-                u.send(msg)  # 发送信息给所有的客户端
-        else:
+        try:
+            message = wsock.receive()  # 接收客户端发来的信息
+        except Exception:
             break
-    users.remove(ws)
+        if message:
+            for user in users:
+                try:
+                    user.send(message)  # 给客户端推送信息
+                except Exception:
+                    break  # 客户端已断开连接
+    users.remove(wsock)  # 如果有客户端断开，则删除这个断开的WebSocket
 
 
-@app.get('/logs')
+@app.route('/logs')
 def logs():
     web_socket_host = os.environ.get('LOG_WEBSOCKET', 'localhost:6008')
-    html_text = '''
-    <!DOCTYPE HTML>
-    <html>
-        <head>
-            <meta charset="utf-8">
-            <title>Simple Logs</title>
-            <link rel="stylesheet" href="/logs/static/logs.css" type="text/css" />
-            <script type="text/javascript">
-                var wsUrl = "ws://{0}/logs/websocket";
-            </script>
-            <script src="/logs/static/logs.js" type="text/javascript" charset="utf-8"></script>
-        </head>
-        <body>
-            <pre class="msg"><code></code></pre>
-        </body>
-    </html>
-    '''.format(web_socket_host)
-    return html_text
-
-
-@app.get('/logs/static/<path>')
-def static(path):
-    return static_file(path, root='./static/')  # 静态文件
+    return render_template('logs.html', web_socket_host=web_socket_host)
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=6008, server=GeventWebSocketServer)
+    server = pywsgi.WSGIServer(
+        ("0.0.0.0", 6008), app, handler_class=WebSocketHandler)
+    server.serve_forever()
