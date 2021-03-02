@@ -1,11 +1,12 @@
-from bottle import get, run, static_file
+from bottle import static_file, Bottle
 from bottle.ext.websocket import GeventWebSocketServer
 from bottle.ext.websocket import websocket
 
+app = Bottle()
 users = set()  # 连接进来的WebSocket客户端集合
 
 
-@get('/api/v1/logs/websocket', apply=[websocket])
+@app.get('/api/v1/logs/websocket', apply=[websocket])
 def api_v1_logs_websocket(ws):
     users.add(ws)
     while True:
@@ -18,10 +19,10 @@ def api_v1_logs_websocket(ws):
     users.remove(ws)
 
 
-@get('/api/v1/logs')
+@app.get('/api/v1/logs')
 def api_v1_logs():
     return static_file('logs.html', root='./html/')  # 静态文件
 
 
 if __name__ == '__main__':
-    run(host='0.0.0.0', port=6008, server=GeventWebSocketServer)
+    app.run(host='0.0.0.0', port=6008, server=GeventWebSocketServer)
