@@ -7,7 +7,7 @@ app = Bottle()
 users = set()  # 连接进来的WebSocket客户端集合
 
 
-@app.get('/websocket', apply=[websocket])
+@app.get('/logs/websocket', apply=[websocket])
 def websocket(ws):
     users.add(ws)
     while True:
@@ -20,20 +20,20 @@ def websocket(ws):
     users.remove(ws)
 
 
-@app.get('/')
+@app.get('/logs')
 def logs():
-    web_socket_host = os.environ.get('LOG_WEBSOCKET', '0.0.0.0')
+    web_socket_host = os.environ.get('LOG_WEBSOCKET', 'localhost:6008')
     html_text = '''
     <!DOCTYPE HTML>
     <html>
         <head>
             <meta charset="utf-8">
             <title>Simple Logs</title>
-            <link rel="stylesheet" href="/static/logs.css" type="text/css" />
+            <link rel="stylesheet" href="/logs/static/logs.css" type="text/css" />
             <script type="text/javascript">
-                var wsUrl = "ws://{0}:6008/websocket";
+                var wsUrl = "ws://{0}/logs/websocket";
             </script>
-            <script src="/static/logs.js" type="text/javascript" charset="utf-8"></script>
+            <script src="/logs/static/logs.js" type="text/javascript" charset="utf-8"></script>
         </head>
         <body>
             <pre class="msg"><code></code></pre>
@@ -43,7 +43,7 @@ def logs():
     return html_text
 
 
-@app.get('/static/<path>')
+@app.get('/logs/static/<path>')
 def static(path):
     return static_file(path, root='./static/')  # 静态文件
 
