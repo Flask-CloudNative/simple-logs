@@ -25,6 +25,7 @@ def logs_websocket():
                 except Exception:
                     break  # 客户端已断开连接
     users.remove(wsock)  # 如果有客户端断开，则删除这个断开的WebSocket
+    return '客户端已断开连接'
 
 
 @app.route('/logs')
