@@ -5,15 +5,25 @@
     <meta charset="utf-8">
     <title>Simple Logs</title>
     <style>
+        body {
+            background-color: #000000;
+        }
+
         .msg {
             overflow: auto;
             border: 2px solid #000000;
-            background-color: #000000;
             color: #ffffff;
         }
+
+        .navA {
+            text-decoration: none;
+            color: #ffffff;
+            font-weight: bold;
+        }
     </style>
+    {% if application %}
     <script type="text/javascript">
-        var wsUrl = "ws://{{ web_socket_host }}/logs/websocket";
+        var wsUrl = "ws://{{ web_socket_host }}/logs/websocket/{{ application }}/js";
         var lockReconnect = false;  // 避免WS重复连接
         var ws = null;  // 判断当前浏览器是否支持WebSock
         createWebSocket(wsUrl); // 连接ws
@@ -53,7 +63,11 @@
             ws.onmessage = function (event) { // 如果获取到消息，心跳检测重置
                 heartCheck.reset().start(); // 拿到任何消息都说明当前连接是正常的
                 if (event.data != 'pong') {
-                    console.log("ws收到消息啦：" + event.data);
+                    var logsObj = document.getElementById('logs');
+                    var divObj = document.createElement('div');
+                    divObj.innerHTML = event.data;
+                    logsObj.appendChild(divObj);
+                    console.log("ws收到消息：" + event.data);
                 }
             };
         }
@@ -95,10 +109,24 @@
             }
         }
     </script>
+    {% endif %}
 </head>
 
 <body>
-    <pre class="msg"><code></code></pre>
+    <nav>
+        {% for users in users_key %}
+        <a class="navA" {% if application==users %}style="color: #ff0000;" {% endif%} target="_blank"
+            href="/logs/view/{{ users }}">
+            {{ users }}应用
+        </a>&nbsp;&nbsp;
+        {% endfor %}
+    </nav>
+    {% if users_key %}
+    <HR>
+    {% endif %}
+    {% if application %}
+    <pre class="msg"><code id="logs"></code></pre>
+    {% endif %}
 </body>
 
 </html>
